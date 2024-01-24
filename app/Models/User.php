@@ -3,14 +3,18 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +25,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'deleted_at',
+        'description',
+        'is_admin',
+        'is_verified',
+        'address',
+        'email_verified_at',
+        'date_of_birth',
+        'phone_number',
+        'avatar'
     ];
 
     /**
@@ -42,4 +55,16 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->is_admin;
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        $app_url = env('APP_URL', 'http://localhost');
+
+        return $this->avatar ? "{$app_url}/storage/{$this->avatar}" : null;
+    }
 }
