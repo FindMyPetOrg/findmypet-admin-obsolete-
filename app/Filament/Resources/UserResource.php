@@ -104,7 +104,7 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\FileUpload::make('avatar')
-                    ->label('Change Avatar')
+                    ->label('Create Avatar')
                     ->avatar()
                     ->columnSpanFull()
                     ->getUploadedFileNameForStorageUsing(
@@ -166,7 +166,13 @@ class UserResource extends Resource
                     })
                     ->circular(),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->description(function (Model $record) {
+                        $description = substr($record->description, 0, 16);
+
+                        return "{$description}...";
+                    })
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
@@ -233,13 +239,6 @@ class UserResource extends Resource
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array
