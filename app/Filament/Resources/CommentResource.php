@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 
 class CommentResource extends Resource
 {
@@ -30,7 +31,7 @@ class CommentResource extends Resource
         return $form
             ->schema([
 
-                Forms\Components\Section::make('post_details_section')
+                Forms\Components\Section::make('comment_details_section')
                     ->schema([
                     Forms\Components\Select::make('user_id')
                         ->required()
@@ -51,6 +52,12 @@ class CommentResource extends Resource
                                 })
                                 ->toArray();
                         })
+                        ->getOptionLabelUsing(function (string $value) {
+                            $user = User::find($value);
+
+                            return "{$user->name} {$user->email}";
+                        })
+                        ->preload()
                         ->exists('users', 'id'),
                         Forms\Components\Select::make('post_id')
                             ->required()
@@ -71,6 +78,10 @@ class CommentResource extends Resource
                                     })
                                     ->toArray();
                             })
+                            ->getOptionLabelUsing(function (string $value) {
+                                return Post::find($value)?->title;
+                            })
+                            ->preload()
                             ->exists('posts', 'id'),
 
                         Forms\Components\Textarea::make('description')
