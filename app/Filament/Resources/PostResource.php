@@ -10,10 +10,13 @@ use Faker\Provider\Text;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PostResource extends Resource
@@ -31,12 +34,14 @@ class PostResource extends Resource
                 Forms\Components\Section::make('post_details_section')
                     ->schema([
                         Forms\Components\FileUpload::make('images')
-                            ->image()
+                            ->required()
                             ->multiple()
                             ->columnSpanFull()
-                            ->getUploadedFileUsing(function (array $files) {
-                                return $files;
-                            }),
+                            ->getUploadedFileNameForStorageUsing(
+                                fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
+                                    ->prepend(bin2hex(random_bytes(16))),
+                            )
+                            ->storeFiles(),
                         Forms\Components\TextInput::make('title')
                             ->placeholder('Enter a title for the post')
                             ->required()
@@ -48,6 +53,18 @@ class PostResource extends Resource
                             ->required()
                             ->minLength(3)
                             ->maxLength(256)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('lat')
+                            ->required()
+                            ->numeric()
+                            ->label('Latitude')
+                            ->placeholder('Enter the latitude of the post')
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('lng')
+                            ->required()
+                            ->numeric()
+                            ->label('Longitude')
+                            ->placeholder('Enter the longitude of the post')
                             ->columnSpan(1),
                         Forms\Components\Select::make('user_id')
                             ->required()
@@ -70,11 +87,11 @@ class PostResource extends Resource
                             })
                             ->exists('users', 'id'),
                         Forms\Components\Select::make('type')
-                            ->options(['REQUEST', 'FOUND'])
+                            ->options(['REQUEST' => 'Request', 'FOUND' => 'Found'])
                             ->in(['REQUEST', 'FOUND']),
-                        Forms\Components\TextInput::make('rewrad')
+                        Forms\Components\TextInput::make('reward')
                             ->required()
-                            ->numeric(true)
+                            ->numeric()
                             ->suffix('RON')
                             ->columnSpanFull(),
                         Forms\Components\TagsInput::make('tags')
@@ -91,7 +108,47 @@ class PostResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable()
+                    ->description(function (Model $record) {
+                        $description = substr($record->description, 0, 16);
+
+                        return "{$description}...";
+                    })
+                    ->weight('bold'),
+                Tables\Columns\TextColumn::make('created_by')
+                    ->getStateUsing(function (Model $record): string {
+                        return $record->user->name;
+                    })
+                    ->badge()
+                    ->color(function (Model $record) {
+                        if ($record->user->is_verified)
+                            return Color::Blue;
+                        return Color::Gray;
+                    })
+                    ->icon(function (Model $record) {
+                        if ($record->user->is_verified)
+                            return 'heroicon-o-shield-check';
+                        return null;
+                    }),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('deleted_at')
+                    ->getStateUsing(function (Model $record): bool {
+                        return $record->deleted_at !== null;
+                    })
+                    ->boolean()
+                    ->label('Is hidden?')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('post_tags')
+                    ->getStateUsing(function (Model $record): array {
+                        return $record->tags;
+                    })
+                    ->badge()
+                    ->color(Color::Green)
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -112,7 +169,6 @@ class PostResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\UserRelationManager::class
         ];
     }
 

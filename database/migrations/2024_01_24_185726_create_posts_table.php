@@ -20,6 +20,7 @@ return new class extends Migration
             $table->double('lng');
             $table->integer('reward')->nullable();
             $table->enum('type', ['REQUEST', 'FOUND'])->default('REQUEST');
+            $table->json('images');
             $table->json('tags')->nullable();
             $table->softDeletes();
             $table->timestamps();

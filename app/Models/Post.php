@@ -11,8 +11,13 @@ class Post extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $fillable = [
+        'user_id', 'title', 'description', 'lat', 'lng', 'reward', 'type', 'images', 'tags'
+    ];
+
     protected $casts = [
-        'tags' => 'array'
+        'tags' => 'array',
+        'images' => 'array'
     ];
 
     public function user(): BelongsTo {
