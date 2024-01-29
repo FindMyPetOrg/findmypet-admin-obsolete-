@@ -27,7 +27,7 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-circle';
-    protected static ?string $navigationGroup = 'Administrative Area';
+    protected static ?string $navigationGroup = 'User\'s Administrative Area';
 
     public static function infolist(Infolist $infolist): Infolist
     {
@@ -103,7 +103,7 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\FileUpload::make('avatar')
+                Forms\Components\FileUpload::make('avatar_url')
                     ->label('Create Avatar')
                     ->avatar()
                     ->columnSpanFull()

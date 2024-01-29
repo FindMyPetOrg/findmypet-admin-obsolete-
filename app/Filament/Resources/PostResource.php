@@ -25,7 +25,7 @@ class PostResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationGroup = 'Administrative Area';
+    protected static ?string $navigationGroup = 'Resource\'s Administrative Area';
 
     public static function form(Form $form): Form
     {
